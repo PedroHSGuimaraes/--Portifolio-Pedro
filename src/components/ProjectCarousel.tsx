@@ -9,7 +9,7 @@ const projects = [
   },
   {
     id: 2,
-    title: "Projeto 2",
+    title: "Projeto 2", 
     description: "Sistema de gerenciamento com TypeScript e Express",
     image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6"
   },

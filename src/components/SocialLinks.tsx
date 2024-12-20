@@ -14,12 +14,12 @@ const socialLinks: SocialLink[] = [
     label: "GitHub",
   },
   {
-    href: "https://www.linkedin.com/in/pedro-henrique-santos-guimar%C3%A3es-b06555121/",
+    href: "https://www.linkedin.com/in/pedro-henrique-santos-guimarães-b06555121/",
     icon: <Linkedin size={24} />,
     label: "LinkedIn",
   },
   {
-    href: "mailto:contact@example.com",
+    href: "mailto:pedro.guimaraes02@hotmail.com",
     icon: <Mail size={24} />,
     label: "Email",
   },
