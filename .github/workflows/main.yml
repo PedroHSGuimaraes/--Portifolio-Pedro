@@ -10,9 +10,9 @@ jobs:
     - name: FTP Deploy Locaweb
       uses: locaweb/ftp-deploy@1.0.0
       with:
-        host: 'ftp.solsticetech1.hospedagemdesites.ws'
-        user: 'ftp.solsticetech.com.br'
-        password: 'Tigredesabre02@'
+        host: ${{ secrets.HOST }} 
+        user: ${{ secrets.USER }}
+        password: ${{ secrets.PASS }}
         localDir: "."
         remoteDir: "/home/solsticetech1/public_html"
         forceSSL: "false"
