@@ -1,20 +1,29 @@
-name: Deploy via ftp
-on: push
+name: Deploy via FTP Locaweb
+
+on: 
+  push:
+    branches:
+      - main  # ou master, dependendo da sua branch principal
+
 jobs:
   deploy:
-    name: FTP Deploy Locaweb
+    name: Deploy
     runs-on: ubuntu-latest
     steps:
-    - uses: locaweb/ftp-deploy@1.0.0
+    - uses: actions/checkout@v3
+
+    # Se você precisar fazer build antes do deploy, adicione aqui
+    # - name: Build
+    #   run: |
+    #     npm install
+    #     npm run build
 
     - name: FTP Deploy Locaweb
       uses: locaweb/ftp-deploy@1.0.0
       with:
-        host: ${{ secrets.HOST }} 
-        user: ${{ secrets.USER }}
-        password: ${{ secrets.PASS }}
-        localDir: "dist"
-
-
-
-            
+        host: ${{ secrets.FTP_HOST }}
+        user: ${{ secrets.FTP_USER }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        localDir: "."  # ou "dist" se você tiver uma pasta de build
+        remoteDir: "public_html"  # ou "web" se sua hospedagem for Windows
+        forceSSL: "false"
