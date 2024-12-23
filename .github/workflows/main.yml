@@ -1,29 +1,37 @@
-name: Deploy via FTP Locaweb
+name: Deploy Locaweb FTP
 
-on: 
+on:
   push:
     branches:
-      - main  # ou master, dependendo da sua branch principal
+      - main  # Altere para sua branch principal se necessário
+  workflow_dispatch:  # Permite execução manual do workflow
 
 jobs:
-  deploy:
-    name: Deploy
+  web-deploy:
+    name: 🎉 Deploy
     runs-on: ubuntu-latest
+    
     steps:
-    - uses: actions/checkout@v3
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v3
 
-    # Se você precisar fazer build antes do deploy, adicione aqui
-    # - name: Build
-    #   run: |
-    #     npm install
-    #     npm run build
-
-    - name: FTP Deploy Locaweb
-      uses: locaweb/ftp-deploy@1.0.0
-      with:
-        host: ${{ secrets.FTP_HOST }}
-        user: ${{ secrets.FTP_USER }}
-        password: ${{ secrets.FTP_PASSWORD }}
-        localDir: "."  # ou "dist" se você tiver uma pasta de build
-        remoteDir: "public_html"  # ou "web" se sua hospedagem for Windows
-        forceSSL: "false"
+      # Se você precisar de build, descomente e ajuste conforme necessário
+      # - name: Set up Node.js
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: '18'
+      
+      # - name: 🔨 Build Project
+      #   run: |
+      #     npm install
+      #     npm run build
+        
+      - name: 📂 Deploy to Locaweb
+        uses: locaweb/ftp-deploy@1.0.0
+        with:
+          host: ${{ secrets.HOST }}  
+          user: ${{ secrets.USER }}
+          password: ${{ secrets.PASS }}
+          localDir: "."        # Altere para "dist" se usar build
+          remoteDir: "web"    # Use "web" para Windows ou "public_html" para Linux
+          forceSSL: "false"   # Altere para "true" se precisar de SSL
