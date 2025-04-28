@@ -6,14 +6,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    
+    - name: Configurar Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Instalar dependências
+      run: npm ci
+        
+    - name: Build do projeto
+      run: npm run build
 
     - name: FTP Deploy Locaweb
-      uses: locaweb/ftp-deploy@1.0.0
+      # Usando a action SamKirkland/FTP-Deploy-Action que é mais robusta e amplamente utilizada
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
-        host: "ftp.solsticetech.com.br" 
-        user: "solsticetech1"
-        password: "Tigredesabre02@"
-        localDir: "."
-        remoteDir: "/home/solsticetech1/public_html"
-        forceSSL: "false"
-        options: "--verbose"  # Isso vai nos dar mais detalhes do erro
+        server: ftp.solsticetech.com.br
+        username: solsticetech1
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./dist/
+        server-dir: /home/solsticetech1/public_html/
+        dangerous-clean-slate: true # Limpa o diretório remoto antes do upload (use com cuidado)

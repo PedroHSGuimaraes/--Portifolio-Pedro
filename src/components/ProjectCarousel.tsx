@@ -1,4 +1,16 @@
-import React, { useState, useEffect } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useEffect, useRef } from "react";
+
+// Componente para pré-carregar imagens
+function PreloadImages({ images }: { images: string[] }) {
+  return (
+    <div style={{ display: "none" }}>
+      {images.map((src, index) => (
+        <img key={`preload-${index}`} src={src} alt="Preload" />
+      ))}
+    </div>
+  );
+}
 
 const projects = [
   {
@@ -58,27 +70,74 @@ export function ProjectCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
   const [direction, setDirection] = useState("right");
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const slideContainerRef = useRef<HTMLDivElement | null>(null);
+  
+  // Extrair URLs das imagens para pré-carregamento
+  const projectImages = projects.map(project => project.image);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setDirection("right");
-      setShowDetails(false);
-
-      setTimeout(() => {
-        setCurrentIndex((prevIndex) =>
-          prevIndex === projects.length - 1 ? 0 : prevIndex + 1
-        );
-
+  // Função para aplicar efeito de transição suave
+  const applyTransition = (direction: "left" | "right") => {
+    if (slideContainerRef.current) {
+      const container = slideContainerRef.current;
+      
+      // Primeiro removemos qualquer transformação existente
+      container.style.transition = "none";
+      container.style.transform = "translateX(0)";
+      
+      // Forçar um reflow para garantir que a transição seja aplicada corretamente
+      void container.offsetWidth;
+      
+      // Definimos a animação baseada na direção com easing mais suave
+      container.style.transition = "transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1)";
+      
+      if (direction === "right") {
+        container.style.transform = "translateX(-30px)";
         setTimeout(() => {
-          setShowDetails(true);
-        }, 300);
-      }, 300);
-    }, 10000);
+          container.style.transform = "translateX(0)";
+        }, 10);
+      } else {
+        container.style.transform = "translateX(30px)";
+        setTimeout(() => {
+          container.style.transform = "translateX(0)";
+        }, 10);
+      }
+    }
+  };
 
-    // Iniciar com detalhes visíveis
+  // Efeito para pré-carregar todas as imagens quando o componente é montado
+  useEffect(() => {
+    // Iniciar apenas com detalhes visíveis, sem animação automática
     setShowDetails(true);
-
-    return () => clearInterval(timer);
+    
+    // Função para pré-carregar todas as imagens dos projetos
+    const preloadImages = () => {
+      // Criamos um array de promessas, uma para cada imagem a ser carregada
+      const imagePromises = projectImages.map((src) => {
+        // Cada promessa é resolvida quando a imagem carrega ou rejeitada se ocorrer erro
+        return new Promise((resolve, reject) => {
+          const img = new Image(); // Cria um novo elemento de imagem
+          img.src = src;           // Define a URL da imagem
+          img.onload = resolve;    // Resolve a promessa quando a imagem carregar
+          img.onerror = reject;    // Rejeita a promessa se ocorrer erro
+        });
+      });
+      
+      // Aguarda todas as imagens serem carregadas
+      Promise.all(imagePromises)
+        .then(() => {
+          // Quando todas as imagens carregarem, atualiza o estado
+          setImagesLoaded(true);
+          console.log("Todas as imagens foram pré-carregadas");
+        })
+        .catch(err => console.error("Erro ao pré-carregar imagens:", err));
+    };
+    
+    // Chama a função de pré-carregamento
+    preloadImages();
+    
+    // Não é necessário adicionar projectImages como dependência
+    // pois é constante e não muda durante o ciclo de vida do componente
   }, []);
 
   const handlePrevious = () => {
@@ -89,7 +148,8 @@ export function ProjectCarousel() {
         prevIndex === 0 ? projects.length - 1 : prevIndex - 1
       );
       setShowDetails(true);
-    }, 300);
+      applyTransition("left");
+    }, 200); // Reduzindo o tempo de espera para uma transição mais fluida
   };
 
   const handleNext = () => {
@@ -100,13 +160,17 @@ export function ProjectCarousel() {
         prevIndex === projects.length - 1 ? 0 : prevIndex + 1
       );
       setShowDetails(true);
-    }, 300);
+      applyTransition("right");
+    }, 200); // Reduzindo o tempo de espera para uma transição mais fluida
   };
 
   const currentProject = projects[currentIndex];
 
   return (
     <div className="max-w-6xl mx-auto px-4">
+      {/* Componente para pré-carregar todas as imagens */}
+      <PreloadImages images={projectImages} />
+      
       <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden mb-12 transition-colors duration-300">
         {/* Controles de navegação */}
         <button
@@ -151,11 +215,26 @@ export function ProjectCarousel() {
 
         {/* Projeto atual */}
         <div className="flex flex-col md:flex-row">
-          <div className="md:w-1/2 h-64 md:h-auto relative">
+          {/* Contenedor da imagem com tamanho fixo para evitar layout shift */}
+          <div className="md:w-1/2 h-64 md:h-auto relative overflow-hidden">
+            {/* 
+              Imagem do projeto com tratamento especial:
+              1. Mostra a imagem apenas quando todas estão carregadas (imagesLoaded)
+              2. Usa transição suave para opacity e transform
+              3. Atributo loading="eager" para carregar com alta prioridade
+            */}
             <img
               src={currentProject.image}
               alt={currentProject.title}
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover ${imagesLoaded ? 'opacity-100' : 'opacity-0'}`}
+              style={{
+                transition: "transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.5s ease-in-out",
+              }}
+              loading="eager"
+              onLoad={() => {
+                // Garante que a imagem está visível após carregamento individual
+                setImagesLoaded(true);
+              }}
             />
             <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-center items-center text-white p-6">
               <h3 className="text-2xl font-bold mb-2 animate-fade-in">
@@ -164,12 +243,15 @@ export function ProjectCarousel() {
             </div>
           </div>
 
-          <div className="md:w-1/2 p-6">
+          <div 
+            ref={slideContainerRef} 
+            className="md:w-1/2 p-6"
+          >
             {showDetails && (
-              <div
-                className={`animate-${
-                  direction === "right" ? "slide-in-right" : "slide-in-left"
-                }`}
+              <div 
+                style={{
+                  animation: `${direction === "right" ? "slideInRight" : "slideInLeft"} 0.3s ease-out forwards`
+                }}
               >
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                   {currentProject.title}
